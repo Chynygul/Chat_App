@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="socket13" level="project" />
+    <orderEntry type="library" name="lib19" level="project" />
+    <orderEntry type="library" name="lib2" level="project" />
+    <orderEntry type="library" name="chart-application2" level="project" />
+    <orderEntry type="library" name="lib23" level="project" />
+    <orderEntry type="library" name="miglayout-4.1" level="project" />
+    <orderEntry type="library" name="miglayout-4.3" level="project" />
+    <orderEntry type="library" name="chart-application" level="project" />
+    <orderEntry type="library" name="miglayout-4.0" level="project" />
+    <orderEntry type="library" name="miglayout-4.6" level="project" />
+    <orderEntry type="library" name="socket21" level="project" />
+    <orderEntry type="library" name="miglayout-4.5" level="project" />
+    <orderEntry type="library" name="socket3" level="project" />
+    <orderEntry type="library" name="socket18" level="project" />
+    <orderEntry type="library" name="lib" level="project" />
+    <orderEntry type="library" name="lib12" level="project" />
+    <orderEntry type="library" name="socket19" level="project" />
+    <orderEntry type="library" name="miglayout-4.4" level="project" />
+    <orderEntry type="library" name="miglayout-4.9" level="project" />
+    <orderEntry type="library" name="lib5" level="project" />
+    <orderEntry type="library" name="lib22" level="project" />
+    <orderEntry type="library" name="socket4" level="project" />
+    <orderEntry type="library" name="lib17" level="project" />
+    <orderEntry type="library" name="chart-application3" level="project" />
+    <orderEntry type="library" name="socket6" level="project" />
+    <orderEntry type="library" name="miglayout-4.8" level="project" />
+    <orderEntry type="library" name="lib7" level="project" />
+    <orderEntry type="library" name="socket14" level="project" />
+    <orderEntry type="library" name="socket10" level="project" />
+    <orderEntry type="library" name="lib14" level="project" />
+    <orderEntry type="library" name="miglayout-4.2" level="project" />
+    <orderEntry type="library" name="lib15" level="project" />
+    <orderEntry type="library" name="lib8" level="project" />
+    <orderEntry type="library" name="socket9" level="project" />
+    <orderEntry type="library" name="miglayout-4.7" level="project" />
+    <orderEntry type="library" name="lib6" level="project" />
+    <orderEntry type="library" name="socket20" level="project" />
+    <orderEntry type="library" name="lib24" level="project" />
+    <orderEntry type="library" name="lib3" level="project" />
+    <orderEntry type="library" name="lib25" level="project" />
+    <orderEntry type="library" name="socket22" level="project" />
+    <orderEntry type="module" module-name="chart-application7" />
+    <orderEntry type="module" module-name="part 11" />
+    <orderEntry type="module" module-name="chart-application3" />
+    <orderEntry type="module" module-name="part 7" />
+    <orderEntry type="module" module-name="server11" />
+    <orderEntry type="module" module-name="chart-application" />
+    <orderEntry type="module" module-name="server9" />
+    <orderEntry type="module" module-name="chart-application12" />
+    <orderEntry type="module" module-name="chart-application9" />
+    <orderEntry type="module" module-name="chart-application6" />
+    <orderEntry type="module" module-name="part 9" />
+    <orderEntry type="module" module-name="server" />
+    <orderEntry type="module" module-name="part 8" />
+    <orderEntry type="module" module-name="chart-application8" />
+    <orderEntry type="module" module-name="chart-application10" />
+    <orderEntry type="module" module-name="part 10" />
+    <orderEntry type="module" module-name="chart-application2" />
+    <orderEntry type="module" module-name="chart-application11" />
+    <orderEntry type="module" module-name="chart-application5" />
+  </component>
+</module>
