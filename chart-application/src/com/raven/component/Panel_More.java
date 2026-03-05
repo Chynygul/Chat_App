@@ -106,9 +106,41 @@ public class Panel_More extends javax.swing.JPanel {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 JFileChooser ch = new JFileChooser();
-                ch.showOpenDialog(Main.getFrames()[0]);
-                //  Update next
+                ch.setMultiSelectionEnabled(true);
+                ch.setFileFilter(new FileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        // Разрешаем папки или любые файлы, КРОМЕ изображений
+                        return file.isDirectory() || !isImageFile(file);
+                    }
 
+                    @Override
+                    public String getDescription() {
+                        return "Non-image files";
+                    }
+                });
+
+                int option = ch.showOpenDialog(Main.getFrames()[0]);
+                if (option == JFileChooser.APPROVE_OPTION) {
+                    File files[] = ch.getSelectedFiles();
+                    try {
+                        for (File file : files) {
+                            // Создаём сообщение с типом FILE
+                            Model_Send_Message message = new Model_Send_Message(
+                                    MessageType.FILE,
+                                    Service.getInstance().getUser().getUserID(),
+                                    user.getUserID(),
+                                    ""
+                            );
+                            // Добавляем файл к сообщению
+                            Service.getInstance().addFile(file, message);
+                            // Отправляем сообщение
+                            PublicEvent.getInstance().getEventChat().sendMessage(message);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         });
         return cmd;

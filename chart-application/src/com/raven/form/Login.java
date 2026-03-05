@@ -9,6 +9,8 @@ import com.raven.model.Model_Register;
 import com.raven.model.Model_User_Account;
 import com.raven.service.Service;
 import io.socket.client.Ack;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 public class Login extends javax.swing.JPanel {
 
@@ -20,31 +22,34 @@ public class Login extends javax.swing.JPanel {
     private void init() {
         PublicEvent.getInstance().addEventLogin(new EventLogin() {
             @Override
-            public void login(Model_Login data) {
-                new Thread(new Runnable() {
+            public void login(Model_Login data, EventMessage message) {
+                javax.swing.SwingUtilities.invokeLater(() ->
+                        PublicEvent.getInstance().getEventMain().showLoading(true)
+                );
+
+                Service.getInstance().getClient().emit("login", data.toJsonObject(), new Ack() {
                     @Override
-                    public void run() {
-                        PublicEvent.getInstance().getEventMain().showLoading(true);
-                        Service.getInstance().getClient().emit("login", data.toJsonObject(), new Ack() {
-                            @Override
-                            public void call(Object... os) {
-                                if (os.length > 0) {
-                                    boolean action = (Boolean) os[0];
-                                    if (action) {
-                                        Service.getInstance().setUser(new Model_User_Account(os[1]));
-                                        PublicEvent.getInstance().getEventMain().showLoading(false);
-                                        PublicEvent.getInstance().getEventMain().initChat();
-                                    } else {
-                                        //  password wrong
-                                        PublicEvent.getInstance().getEventMain().showLoading(false);
-                                    }
+                    public void call(Object... os) {
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            PublicEvent.getInstance().getEventMain().showLoading(false);
+
+                            if (os.length > 0) {
+                                boolean action = (Boolean) os[0];
+                                if (action) {
+                                    Service.getInstance().setUser(new Model_User_Account(os[1]));
+                                    message.callMessage(new Model_Message(true, "OK"));
+                                    PublicEvent.getInstance().getEventMain().initChat();
                                 } else {
-                                    PublicEvent.getInstance().getEventMain().showLoading(false);
+                                    // ожидаем: false, "REASON_CODE"
+                                    String reason = (os.length > 1 && os[1] != null) ? os[1].toString() : "LOGIN_FAILED";
+                                    message.callMessage(new Model_Message(false, reason));
                                 }
+                            } else {
+                                message.callMessage(new Model_Message(false, "NO_RESPONSE"));
                             }
                         });
                     }
-                }).start();
+                });
             }
 
             @Override

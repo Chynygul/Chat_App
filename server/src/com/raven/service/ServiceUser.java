@@ -76,41 +76,45 @@ public class ServiceUser {
         return message;
     }
 
-    public Model_User_Account login(Model_Login login) throws SQLException {
-            Model_User_Account data = null;
+    public Model_Message loginWithReason(Model_Login login) throws SQLException {
 
-            // Сначала находим пользователя по имени
-            String sql = "SELECT users.userid, users.password, user_account.username, user_account.gender, user_account.imagestring, users.email " +
-                    "FROM users JOIN user_account USING (userid) " +
-                    "WHERE users.username = ? AND user_account.status = '1'";
+        // 1) есть ли такой username (и активен ли)
+        String sqlUser =
+                "SELECT u.userid, u.password, u.email, ua.username, ua.gender, ua.imagestring " +
+                        "FROM users u JOIN user_account ua USING (userid) " +
+                        "WHERE ua.status='1' AND u.username=?";
 
-            PreparedStatement p = con.prepareStatement(sql);
+        try (PreparedStatement p = con.prepareStatement(sqlUser)) {
             p.setString(1, login.getUserName());
-            ResultSet r = p.executeQuery();
 
-            if (r.next()) {
-                String passwordFromDB = r.getString("password");
-                String email = r.getString("email");
-
-                // Сравнение пароля
-                if (login.getPassword().equals(passwordFromDB)) {  // 🔒 тут можно будет заменить на хеш-проверку
-                    int userID = r.getInt("userid");
-                    String userName = r.getString("username");
-                    String gender = r.getString("gender");
-                    String image = r.getString("imagestring");
-
-                    data = new Model_User_Account(userID, userName, email, gender, image, true);
-                } else {
-                    throw new SQLException("Invalid password");  // ❌ Можно сделать кастомный тип ошибки
+            try (ResultSet r = p.executeQuery()) {
+                if (!r.next()) {
+                    return new Model_Message(false, "USER_NOT_FOUND", null);
                 }
-            } else {
-                throw new SQLException("User was not found");
-            }
 
-            r.close();
-            p.close();
-            return data;
+                String emailFromDB = r.getString("email");
+                if (!login.getEmail().equalsIgnoreCase(emailFromDB)) {
+                    return new Model_Message(false, "EMAIL_NOT_MATCH", null);
+                }
+
+                String passFromDB = r.getString("password");
+                if (!login.getPassword().equals(passFromDB)) {
+                    return new Model_Message(false, "WRONG_PASSWORD", null);
+                }
+
+                Model_User_Account user = new Model_User_Account(
+                        r.getInt("userid"),
+                        r.getString("username"),
+                        emailFromDB,
+                        r.getString("gender"),
+                        r.getString("imagestring"),
+                        true
+                );
+
+                return new Model_Message(true, "OK", user);
+            }
         }
+    }
 
 
 // изначальный код

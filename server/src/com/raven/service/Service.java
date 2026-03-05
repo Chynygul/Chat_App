@@ -7,6 +7,7 @@ import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.ConnectListener;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
+//import com.mysql.jdbc.PreparedStatement;
 import com.raven.app.MessageType;
 import com.raven.model.Model_Client;
 import com.raven.model.Model_File;
@@ -20,6 +21,9 @@ import com.raven.model.Model_Reques_File;
 import com.raven.model.Model_Send_Message;
 import com.raven.model.Model_User_Account;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,26 +77,50 @@ public class Service {
         });
         server.addEventListener("login", Model_Login.class, new DataListener<Model_Login>() {
             @Override
-            public void onData(SocketIOClient sioc, Model_Login t, AckRequest ar) throws Exception {
-                Model_User_Account login = serviceUser.login(t);
-                if (login != null) {
-                    ar.sendAckData(true, login);
-                    addClient(sioc, login);
+            public void onData(SocketIOClient sioc, Model_Login t, AckRequest ar) {
+                try {
+                    Model_Message result = serviceUser.loginWithReason(t);
 
-                    List<Model_User_Account> users = serviceUser.getUser(login.getUserID());
-                    sioc.sendEvent("list_user", users.toArray());
-
-                    // 3. Отправляем ему статусы всех пользователей, кто уже в сети
-                    for (Model_Client c : listClient) {
-                        int uid = c.getUser().getUserID();
-                        if (uid != login.getUserID()) {
-                            sioc.sendEvent("user_status", uid, true);
-                        }
+                    if (!result.isAction()) {
+                        // false + reason: USER_NOT_FOUND / EMAIL_NOT_MATCH / WRONG_PASSWORD
+                        ar.sendAckData(false, result.getMessage());
+                        return;
                     }
 
+                    Model_User_Account login = (Model_User_Account) result.getData();
+
+                    // ✅ 1) СНАЧАЛА ACK (чтобы клиент не зависал никогда)
+                    ar.sendAckData(true, login);
+
+                    // ✅ 2) потом уже добавляем/обновляем клиента
+                    upsertClient(sioc, login);
+
+                    // ✅ 3) дальше все события можно слать отдельно (они не должны ломать логин)
+                    try {
+                        List<Model_User_Account> users = serviceUser.getUser(login.getUserID());
+                        sioc.sendEvent("list_user", users.toArray());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    // статусы онлайн
+                    try {
+                        for (Model_Client c : listClient) {
+                            int uid = c.getUser().getUserID();
+                            if (uid != login.getUserID()) {
+                                sioc.sendEvent("user_status", uid, true);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    // broadcast что этот юзер онлайн
                     userConnect(login.getUserID());
-                } else {
-                    ar.sendAckData(false);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    ar.sendAckData(false, "SERVER_ERROR");
                 }
             }
         });
@@ -167,7 +195,27 @@ public class Service {
         server.start();
         textArea.append("Server has Start on port : " + PORT_NUMBER + "\n");
     }
-    
+
+    private void upsertClient(SocketIOClient client, Model_User_Account user) {
+        // если этот сокет уже есть в списке, просто обновим user
+        for (Model_Client c : listClient) {
+            if (c.getClient() == client) {
+                c.setUser(user); // если у Model_Client нет setUser, тогда удалим и добавим
+                return;
+            }
+        }
+
+        // если пользователь уже был онлайн с другого сокета, можно заменить (по желанию)
+        for (int i = 0; i < listClient.size(); i++) {
+            if (listClient.get(i).getUser().getUserID() == user.getUserID()) {
+                listClient.set(i, new Model_Client(client, user));
+                return;
+            }
+        }
+
+        listClient.add(new Model_Client(client, user));
+    }
+
     private void userConnect(int userID) {
         server.getBroadcastOperations().sendEvent("user_status", userID, true);
     }

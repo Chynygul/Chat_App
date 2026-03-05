@@ -1,7 +1,9 @@
 package com.raven.form;
 
+import com.raven.event.EventMessage;
 import com.raven.event.PublicEvent;
 import com.raven.model.Model_Login;
+import com.raven.model.Model_Message;
 
 public class P_Login extends javax.swing.JPanel {
 
@@ -25,7 +27,7 @@ public class P_Login extends javax.swing.JPanel {
         lbError.setFont(new java.awt.Font("sansserif", 0, 11)); // NOI18N
         lbError.setForeground(new java.awt.Color(255, 0, 0));
         lbError.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lbError.setText("привет ");
+        lbError.setText("");
 
         jLabel3.setText("Email");
 
@@ -140,9 +142,65 @@ public class P_Login extends javax.swing.JPanel {
 
             // Все поля валидны — отправляем на обработку
             Model_Login login = new Model_Login(user, email, pass);
-            PublicEvent.getInstance().getEventLogin().login(login);
+            PublicEvent.getInstance().getEventLogin().login(login, new EventMessage() {
+                @Override
+                public void callMessage(Model_Message message) {
+                    if (!message.isAction()) {
+                        showLoginError(message.getMessage());
+                    } else {
+                        lbError.setText(" ");
+                    }
+                }
+            });
 
     }//GEN-LAST:event_cmdLoginActionPerformed
+
+    private void showLoginError(String code) {
+        resetFieldBorders();
+
+        switch (code) {
+            case "USER_NOT_FOUND":
+                lbError.setText("User not found.");
+                markError(txtUser);
+                txtUser.grabFocus();
+                break;
+
+            case "EMAIL_NOT_MATCH":
+                lbError.setText("Email does not match this user.");
+                markError(txtEmail);
+                txtEmail.grabFocus();
+                break;
+
+            case "WRONG_PASSWORD":
+                lbError.setText("Wrong password.");
+                markError(txtPass);
+                txtPass.grabFocus();
+                break;
+
+            case "NO_RESPONSE":
+                lbError.setText("No response from server.");
+                break;
+
+            case "SERVER_ERROR":
+                lbError.setText("Server error.");
+                break;
+
+            default:
+                lbError.setText("Invalid login data.");
+                break;
+        }
+    }
+
+    private void markError(javax.swing.JComponent c) {
+        c.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 0, 0)));
+    }
+
+    private void resetFieldBorders() {
+        java.awt.Color normal = new java.awt.Color(200, 200, 200);
+        txtUser.setBorder(javax.swing.BorderFactory.createLineBorder(normal));
+        txtEmail.setBorder(javax.swing.BorderFactory.createLineBorder(normal));
+        txtPass.setBorder(javax.swing.BorderFactory.createLineBorder(normal));
+    }
 
     private javax.swing.JTextField txtEmail;
     private javax.swing.JLabel jLabel3;

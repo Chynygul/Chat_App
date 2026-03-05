@@ -28,4 +28,14 @@ public class Model_Login {
 
     private String userName;
     private String password;
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    private String email;
 }
