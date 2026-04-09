@@ -107,7 +107,7 @@ public class Model_File_Receiver {
     }
 
     public void startSaveFile() throws IOException, JSONException {
-        Model_Reques_File data = new Model_Reques_File(fileID, accFile.length());
+        Model_Request_File data = new Model_Request_File(fileID, accFile.length());
         socket.emit("reques_file", data.toJsonObject(), new Ack() {
             @Override
             public void call(Object... os) {

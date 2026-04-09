@@ -38,13 +38,15 @@ public class Image_Item extends javax.swing.JLayeredPane {
     }
 
     public void setImage(Model_Receive_Image dataImage) {
-        int width = dataImage.getWidth();
-        int height = dataImage.getHeight();
-        int[] data = BlurHash.decode(dataImage.getImage(), width, height, 1);
-        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        img.setRGB(0, 0, width, height, data, 0, width);
-        Icon icon = new ImageIcon(img);
-        pic.setImage(icon);
+        int width = dataImage.getWidth() > 0 ? dataImage.getWidth() : 200;
+        int height = dataImage.getHeight() > 0 ? dataImage.getHeight() : 200;
+        if (dataImage.getImage() != null && !dataImage.getImage().isEmpty()) {
+            int[] data = BlurHash.decode(dataImage.getImage(), width, height, 1);
+            BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            img.setRGB(0, 0, width, height, data, 0, width);
+            Icon icon = new ImageIcon(img);
+            pic.setImage(icon);
+        }
         try {
             Service.getInstance().addFileReceiver(dataImage.getFileID(), new EventFileReceiver() {
                 @Override

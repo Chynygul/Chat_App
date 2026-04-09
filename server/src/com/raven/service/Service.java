@@ -38,6 +38,7 @@ public class Service {
     private List<Model_Client> listClient;
     private JTextArea textArea;
     private final int PORT_NUMBER = 9999;
+    private ServiceMessage serviceMessage;
     
     public static Service getInstance(JTextArea textArea) {
         if (instance == null) {
@@ -45,12 +46,13 @@ public class Service {
         }
         return instance;
     }
-    
+
     private Service(JTextArea textArea) {
         this.textArea = textArea;
         serviceUser = new ServiceUser();
         serviceFile = new ServiceFIle();
         listClient = new ArrayList<>();
+        serviceMessage = new ServiceMessage();
     }
     
     public void startServer() {
@@ -139,6 +141,8 @@ public class Service {
             @Override
             public void onData(SocketIOClient sioc, Model_Send_Message t, AckRequest ar) throws Exception {
                 sendToClient(t, ar);
+                System.out.println("FILE NAME: " + t.getFileName());
+                System.out.println("FILE SIZE: " + t.getFileSize());
             }
         });
         server.addEventListener("send_file", Model_Package_Sender.class, new DataListener<Model_Package_Sender>() {
@@ -178,6 +182,83 @@ public class Service {
                 if (data != null) {
                     ar.sendAckData(data);
                 } else {
+                    ar.sendAckData();
+                }
+            }
+        });
+//        server.addEventListener("load_chat", Integer[].class, new DataListener<Integer[]>() {
+//            @Override
+//            public void onData(SocketIOClient sioc, Integer[] users, AckRequest ar) throws Exception {
+
+        server.addEventListener("load_chat", List.class, new DataListener<List>() {
+            @Override
+            public void onData(SocketIOClient sioc, List users, AckRequest ar) throws Exception {
+
+                System.out.println("=== load_chat event received ===");
+                System.out.println("Client ID: " + sioc.getSessionId());
+                System.out.println("Users array length: " + (users == null ? "null" : users.size()));
+
+                if (users == null || users.size() < 2) {
+                    System.out.println("ERROR: Invalid users array");
+                    ar.sendAckData(); // Отправляем пустой ответ
+                    return;
+                }
+
+
+                try {
+                    int user1 = (Integer) users.get(0);
+                    int user2 = (Integer) users.get(1);
+                    System.out.println("User1: " + user1 + ", User2: " + user2);
+
+                    System.out.println("Loading chat history from DB...");
+                    List<Model_Receive_Message> history = serviceMessage.getChatHistory(user1, user2);
+
+                    System.out.println("History size from DB: " + history.size()); // ВАЖНО!
+
+                    if (history.isEmpty()) {
+                        System.out.println("No messages found in DB for users: " + user1 + ", " + user2);
+                        ar.sendAckData(new Object[0]); // Отправляем пустой массив
+                        return;
+                    }
+
+                    List<Object> list = new ArrayList<>();
+                    System.out.println("list for client(result)" + list);
+
+                    System.out.println("Конвертация starting");
+                    for (Model_Receive_Message msg : history) {
+                        java.util.Map<String, Object> map = new java.util.HashMap<>();
+                        map.put("messageType", msg.getMessageType());
+                        map.put("fromUserID", msg.getFromUserID());
+                        map.put("text", msg.getText() != null ? msg.getText() : "");
+                        if (msg.getFileName() != null) {
+                            map.put("fileName", msg.getFileName());
+                        }
+                        map.put("fileSize", msg.getFileSize());
+                        map.put("fileID", msg.getFileID());
+
+                        if (msg.getMessageType() == MessageType.IMAGE.getValue() && msg.getFileID() > 0) {
+                            try {
+                                Model_Receive_Image preview = serviceFile.getImagePreviewForHistory(msg.getFileID());
+                                if (preview.getImage() != null && !preview.getImage().isEmpty()) {
+                                    java.util.Map<String, Object> di = new java.util.HashMap<>();
+                                    di.put("fileID", preview.getFileID());
+                                    di.put("image", preview.getImage());
+                                    di.put("width", preview.getWidth());
+                                    di.put("height", preview.getHeight());
+                                    map.put("dataImage", di);
+                                }
+                            } catch (SQLException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                        list.add(map);
+                    }
+                    System.out.println("Отправка ответа клиенту: ");
+                    System.out.println(list.toArray());
+                    ar.sendAckData(list.toArray());
+                } catch (Exception e) {
+                    System.err.println("SQL Error in getChatHistory: " + e.getMessage());
+                    e.printStackTrace();
                     ar.sendAckData();
                 }
             }
@@ -227,7 +308,7 @@ public class Service {
     private void addClient(SocketIOClient client, Model_User_Account user) {
         listClient.add(new Model_Client(client, user));
     }
-    
+
     private void sendToClient(Model_Send_Message data, AckRequest ar) {
         if (data.getMessageType() == MessageType.IMAGE.getValue() || data.getMessageType() == MessageType.FILE.getValue()) {
             try {
@@ -238,19 +319,56 @@ public class Service {
                 e.printStackTrace();
             }
         } else {
+            Model_Receive_Message msg = new Model_Receive_Message(
+                    data.getMessageType(),
+                    data.getFromUserID(),
+                    data.getText(),
+                    null
+            );
+
+            // СНАЧАЛА сохраняем в БД
+            try {
+                serviceMessage.saveMessage(msg, data.getToUserID());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            // ПОТОМ пытаемся доставить онлайн-получателю
             for (Model_Client c : listClient) {
                 if (c.getUser().getUserID() == data.getToUserID()) {
-                    c.getClient().sendEvent("receive_ms", new Model_Receive_Message(data.getMessageType(), data.getFromUserID(), data.getText(), null));
+                    c.getClient().sendEvent("receive_ms", msg);
+                    //c.getClient().sendEvent("load_chat", msg);
                     break;
+                    //serviceMessage.getChatHistory(c.getUser().getUserID(), data.getToUserID());
                 }
             }
         }
     }
-    
+
     private void sendTempFileToClient(Model_Send_Message data, Model_Receive_Image dataImage) {
         for (Model_Client c : listClient) {
             if (c.getUser().getUserID() == data.getToUserID()) {
-                c.getClient().sendEvent("receive_ms", new Model_Receive_Message(data.getMessageType(), data.getFromUserID(), data.getText(), dataImage));
+
+                Model_Receive_Message ms = new Model_Receive_Message(
+                        data.getMessageType(),
+                        data.getFromUserID(),
+                        data.getText(),
+                        dataImage
+                );
+
+                ms.setFileName(data.getFileName());
+                ms.setFileSize(data.getFileSize());
+                ms.setFileID(dataImage.getFileID());
+
+                c.getClient().sendEvent("receive_ms", ms);
+                //c.getClient().sendEvent("load_chat", ms);
+
+                try {
+                    serviceMessage.saveMessage(ms, data.getToUserID());
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
                 break;
             }
         }

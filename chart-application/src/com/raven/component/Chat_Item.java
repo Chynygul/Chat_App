@@ -65,7 +65,6 @@ public class Chat_Item extends javax.swing.JLayeredPane {
         chatImage.addImage(fileSender);
         layer.add(chatImage);
         add(layer);
-
     }
 
     public void setImage(boolean right, Model_Receive_Image dataImage) {
@@ -78,12 +77,82 @@ public class Chat_Item extends javax.swing.JLayeredPane {
         add(layer);
     }
 
-    public void setFile(String fileName, String fileSize) {
+    public void setFile(String fileName, String fileSize, int fileID) {
         JLayeredPane layer = new JLayeredPane();
         layer.setLayout(new FlowLayout(FlowLayout.LEFT));
         layer.setBorder(new EmptyBorder(0, 5, 0, 5));
+
         Chat_File chatFile = new Chat_File();
         chatFile.setFile(fileName, fileSize);
+
+        // делаем файл кликабельным
+        chatFile.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        chatFile.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                try {
+                    if (fileID <= 0) {
+                        System.out.println("Invalid fileID: " + fileID);
+                        return;
+                    }
+                    com.raven.service.Service.getInstance().addFileReceiver(
+                            fileID,
+                            new com.raven.event.EventFileReceiver() {
+                                @Override
+                                public void onStartReceiving() {
+                                    System.out.println("Start receiving file: " + fileName);
+                                }
+
+                                @Override
+                                public void onReceiving(double percentage) {
+                                    System.out.println("Receiving " + fileName + ": " + percentage + "%");
+                                }
+
+                                @Override
+                                public void onFinish(java.io.File file) {
+                                    System.out.println("File downloaded: " + file.getAbsolutePath());
+                                    try {
+                                        if (java.awt.Desktop.isDesktopSupported()) {
+                                            java.awt.Desktop.getDesktop().open(file);
+                                        }
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                }
+                            }
+                    );
+                } catch (java.io.IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        layer.add(chatFile);
+        add(layer);
+    }
+
+    public void setFile(String fileName, String fileSize, java.io.File localFile) {
+        JLayeredPane layer = new JLayeredPane();
+        layer.setLayout(new FlowLayout(FlowLayout.LEFT));
+        layer.setBorder(new EmptyBorder(0, 5, 0, 5));
+
+        Chat_File chatFile = new Chat_File();
+        chatFile.setFile(fileName, fileSize);
+        chatFile.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        chatFile.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                try {
+                    if (localFile != null && localFile.exists() && java.awt.Desktop.isDesktopSupported()) {
+                        java.awt.Desktop.getDesktop().open(localFile);
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
         layer.add(chatFile);
         add(layer);
     }

@@ -95,6 +95,29 @@ public class ServiceFIle {
         return fileSenders.get(fileID).getFileSize();
     }
 
+    /**
+     * Loads blur-hash preview from {@code files} for chat history (IMAGE messages).
+     */
+    public Model_Receive_Image getImagePreviewForHistory(int fileID) throws SQLException {
+        Model_Receive_Image img = new Model_Receive_Image();
+        img.setFileID(fileID);
+        img.setWidth(200);
+        img.setHeight(200);
+        try (PreparedStatement p = con.prepareStatement(
+                "SELECT blurhash FROM files WHERE fileid = ? LIMIT 1")) {
+            p.setInt(1, fileID);
+            try (ResultSet r = p.executeQuery()) {
+                if (r.next()) {
+                    String bh = r.getString("blurhash");
+                    if (bh != null && !bh.isEmpty()) {
+                        img.setImage(bh);
+                    }
+                }
+            }
+        }
+        return img;
+    }
+
     public void receiveFile(Model_Package_Sender dataPackage) throws IOException {
         if (!dataPackage.isFinish()) {
             fileReceivers.get(dataPackage.getFileID()).writeFile(dataPackage.getData());

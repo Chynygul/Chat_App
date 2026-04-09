@@ -3,7 +3,7 @@ package com.raven.model;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Model_Reques_File {
+public class Model_Request_File {
 
     public int getFileID() {
         return fileID;
@@ -21,12 +21,12 @@ public class Model_Reques_File {
         this.currentLength = currentLength;
     }
 
-    public Model_Reques_File(int fileID, long currentLength) {
+    public Model_Request_File(int fileID, long currentLength) {
         this.fileID = fileID;
         this.currentLength = currentLength;
     }
 
-    public Model_Reques_File() {
+    public Model_Request_File() {
     }
 
     private int fileID;

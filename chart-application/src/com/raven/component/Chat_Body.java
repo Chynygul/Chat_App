@@ -44,34 +44,51 @@ public class Chat_Body extends javax.swing.JPanel {
             item.setImage(data.getDataImage());
             item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             body.add(item, "wrap, w 100::80%");
+        } else if (data.getMessageType() == MessageType.FILE) {
+            Chat_Left item = new Chat_Left();
+            item.setText("");
+            item.setFile(data.getFileName(), formatFileSize(data.getFileSize()), data.getFileID());
+            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            this.body.add(item, "wrap, w 100::80%");
+            this.scrollToBottom();
         }
         repaint();
         revalidate();
     }
 
-    public void addItemLeft(String text, String user, String[] image) {
-        Chat_Left_With_Profile item = new Chat_Left_With_Profile();
-        item.setText(text);
-        item.setImage(image);
-        item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
-        item.setUserProfile(user);
-        body.add(item, "wrap, w 100::80%");
-        //  ::80% set max with 80%
-        body.repaint();
-        body.revalidate();
+    private String formatFileSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        double kb = bytes / 1024.0;
+        if (kb < 1024) return String.format("%.1f KB", kb);
+        double mb = kb / 1024.0;
+        if (mb < 1024) return String.format("%.1f MB", mb);
+        double gb = mb / 1024.0;
+        return String.format("%.1f GB", gb);
     }
 
-    public void addItemFile(String text, String user, String fileName, String fileSize) {
-        Chat_Left_With_Profile item = new Chat_Left_With_Profile();
-        item.setText(text);
-        item.setFile(fileName, fileSize);
-        item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
-        item.setUserProfile(user);
-        body.add(item, "wrap, w 100::80%");
-        //  ::80% set max with 80%
-        body.repaint();
-        body.revalidate();
-    }
+//    public void addItemLeft(String text, String user, String[] image) {
+//        Chat_Left_With_Profile item = new Chat_Left_With_Profile();
+//        item.setText(text);
+//        item.setImage(image);
+//        item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+//        item.setUserProfile(user);
+//        body.add(item, "wrap, w 100::80%");
+//        //  ::80% set max with 80%
+//        body.repaint();
+//        body.revalidate();
+//    }
+//
+//    public void addItemFile(String text, String user, String fileName, String fileSize, int fileID) {
+//        Chat_Left_With_Profile item = new Chat_Left_With_Profile();
+//        item.setText(text);
+//        item.setFile(fileName, fileSize, fileID);
+//        item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+//        item.setUserProfile(user);
+//        body.add(item, "wrap, w 100::80%");
+//        //  ::80% set max with 80%
+//        body.repaint();
+//        body.revalidate();
+//    }
 
     public void addItemRight(Model_Send_Message data) {
         if (data.getMessageType() == MessageType.TEXT) {
@@ -90,30 +107,85 @@ public class Chat_Body extends javax.swing.JPanel {
             item.setImage(data.getFile());
             item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             body.add(item, "wrap, al right, w 100::80%");
+        } else if (data.getMessageType() == MessageType.FILE) {
+            Chat_Right item = new Chat_Right();
+            item.setText("");
 
+            java.io.File localFile = null;
+            if (data.getFile() != null) {
+                localFile = data.getFile().getFile();
+            }
+
+            item.setFile(data.getFileName(), formatFileSize(data.getFileSize()), localFile);
+            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            this.body.add(item, "wrap, al right, w 100::80%");
+            this.scrollToBottom();
         }
+
         repaint();
         revalidate();
         scrollToBottom();
     }
 
-    public void addItemFileRight(String text, String fileName, String fileSize) {
-        Chat_Right item = new Chat_Right();
-        item.setText(text);
-        item.setFile(fileName, fileSize);
-        body.add(item, "wrap, al right, w 100::80%");
-        //  ::80% set max with 80%
-        body.repaint();
-        body.revalidate();
+    public void loadHistoryMessage(Model_Receive_Message data, int currentUserId) {
+        if (data.getFromUserID() == currentUserId) {
+            addItemHistoryRight(data);
+        } else {
+            addItemLeft(data);
+        }
     }
 
-    public void addDate(String date) {
-        Chat_Date item = new Chat_Date();
-        item.setDate(date);
-        body.add(item, "wrap, al center");
-        body.repaint();
-        body.revalidate();
+    public void addItemHistoryRight(Model_Receive_Message data) {
+        if (data.getMessageType() == MessageType.TEXT) {
+            Chat_Right item = new Chat_Right();
+            item.setText(data.getText());
+            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            body.add(item, "wrap, al right, w 100::80%");
+        } else if (data.getMessageType() == MessageType.EMOJI) {
+            Chat_Right item = new Chat_Right();
+            item.setEmoji(Emogi.getInstance().getImoji(Integer.valueOf(data.getText())).getIcon());
+            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            body.add(item, "wrap, al right, w 100::80%");
+        } else if (data.getMessageType() == MessageType.IMAGE) {
+            Chat_Right item = new Chat_Right();
+            item.setText("");
+
+            // для истории справа у нас нет Model_File_Sender, а есть только fileID/dataImage
+            // поэтому пока используем dataImage, как и слева
+            item.setImage(data.getDataImage());
+
+            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            body.add(item, "wrap, al right, w 100::80%");
+        } else if (data.getMessageType() == MessageType.FILE) {
+            Chat_Right item = new Chat_Right();
+            item.setText("");
+            item.setFile(data.getFileName(), formatFileSize(data.getFileSize()), data.getFileID());
+            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            body.add(item, "wrap, al right, w 100::80%");
+        }
+
+        repaint();
+        revalidate();
+        scrollToBottom();
     }
+
+//    public void addItemFileRight(String text, String fileName, String fileSize, int fileID) {
+//        Chat_Right item = new Chat_Right();
+//        item.setText(text);
+//        item.setFile(fileName, fileSize, fileID);
+//        body.add(item, "wrap, al right, w 100::80%");
+//        //  ::80% set max with 80%
+//        body.repaint();
+//        body.revalidate();
+//    }
+//
+//    public void addDate(String date) {
+//        Chat_Date item = new Chat_Date();
+//        item.setDate(date);
+//        body.add(item, "wrap, al center");
+//        body.repaint();
+//        body.revalidate();
+//    }
 
     public void clearChat() {
         body.removeAll();

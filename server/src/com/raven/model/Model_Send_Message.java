@@ -48,4 +48,24 @@ public class Model_Send_Message {
     private int fromUserID;
     private int toUserID;
     private String text;
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    private String fileName;
+    private long fileSize;
+
 }

@@ -52,6 +52,11 @@ public class Main extends javax.swing.JFrame {
             @Override
             public void selectUser(Model_User_Account user) {
                 home.setUser(user);
+                System.out.println("Загрузка истории чата при выборе аккаунта в клиентском Main");
+                Service.getInstance().loadChatHistory(
+                        Service.getInstance().getUser().getUserID(),
+                        user.getUserID()
+                );
             }
 
             @Override

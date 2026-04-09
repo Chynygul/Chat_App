@@ -1,6 +1,8 @@
 package com.raven.component;
 
 import com.raven.model.Model_File_Sender;
+import com.raven.model.Model_Receive_Image;
+
 import java.awt.Color;
 import javax.swing.Icon;
 
@@ -28,8 +30,16 @@ public class Chat_Right extends javax.swing.JLayeredPane {
        // txt.setImage(false, image);
     }
 
-    public void setFile(String fileName, String fileSize) {
-        txt.setFile(fileName, fileSize);
+    public void setImage(Model_Receive_Image dataImage) {
+        txt.setImage(true, dataImage);
+    }
+
+    public void setFile(String fileName, String fileSize, int fileID) {
+        txt.setFile(fileName, fileSize, fileID);
+    }
+
+    public void setFile(String fileName, String fileSize, java.io.File localFile) {
+        txt.setFile(fileName, fileSize, localFile);
     }
 
     public void setEmoji(Icon icon) {

@@ -26,10 +26,34 @@ public class Menu_Left extends javax.swing.JPanel {
         PublicEvent.getInstance().addEventMenuLeft(new EventMenuLeft() {
             @Override
             public void newUser(List<Model_User_Account> users) {
-                for (Model_User_Account d : users) {
-                    userAccount.add(d);
-                    menuList.add(new Item_People(d), "wrap");
-                    refreshMenuList();
+                if (users == null || users.isEmpty()) return;
+
+                // Если пришёл большой список (после логина) - считаем это полной синхронизацией
+                // Если пришёл один юзер - это добавление после register
+                boolean fullSync = users.size() > 1;
+
+                if (fullSync) {
+                    // 1) очистить и собрать заново без дублей
+                    userAccount.clear();
+
+                    // 2) дедуп по userID
+                    java.util.LinkedHashMap<Integer, Model_User_Account> map = new java.util.LinkedHashMap<>();
+                    for (Model_User_Account d : users) {
+                        map.put(d.getUserID(), d);
+                    }
+                    userAccount.addAll(map.values());
+
+                    // 3) перестроить UI ОДИН раз
+                    rebuildMenuListUI();
+                } else {
+                    // одиночное обновление (после регистрации нового)
+                    Model_User_Account incoming = users.get(0);
+
+                    // если уже есть - обновляем, если нет - добавляем
+                    addOrUpdateUser(incoming);
+
+                    // обновить UI (можно оптимизировать точечно, но пока нормально)
+                    rebuildMenuListUI();
                 }
             }
 
@@ -74,6 +98,39 @@ public class Menu_Left extends javax.swing.JPanel {
             }
         });
         showMessage();
+    }
+
+    private boolean containsUser(int userId) {
+        for (Model_User_Account u : userAccount) {
+            if (u.getUserID() == userId) return true;
+        }
+        return false;
+    }
+
+    private void addOrUpdateUser(Model_User_Account incoming) {
+        // обновляем в массиве
+        for (int i = 0; i < userAccount.size(); i++) {
+            Model_User_Account u = userAccount.get(i);
+            if (u.getUserID() == incoming.getUserID()) {
+                // обнови поля (минимум статус/имя/картинку/гендер/емайл)
+                u.setUserName(incoming.getUserName());
+                u.setEmail(incoming.getEmail());
+                u.setGender(incoming.getGender());
+                u.setImage(incoming.getImage());
+                u.setStatus(incoming.isStatus());
+                return;
+            }
+        }
+        // если не нашли - добавляем
+        userAccount.add(incoming);
+    }
+
+    private void rebuildMenuListUI() {
+        menuList.removeAll();
+        for (Model_User_Account d : userAccount) {
+            menuList.add(new Item_People(d), "wrap");
+        }
+        refreshMenuList();
     }
 
     private void showMessage() {

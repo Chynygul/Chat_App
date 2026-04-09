@@ -1,5 +1,6 @@
 package com.raven.model;
 
+import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -44,15 +45,28 @@ public class Model_Receive_Image {
         this.height = height;
     }
 
-    public Model_Receive_Image(Object json) {
-        JSONObject obj = (JSONObject) json;
+    public Model_Receive_Image(Object json) throws JSONException {
+        JSONObject obj;
+        if (json instanceof JSONObject) {
+            obj = (JSONObject) json;
+        } else if (json instanceof Map) {
+            obj = new JSONObject((Map<?, ?>) json);
+        } else {
+            obj = new JSONObject(json.toString());
+//            try{
+//                obj = new JSONObject(json.toString());
+//            }
+//            catch (JSONException e){
+//                System.out.println(e.getMessage() + "ошибка из Model_Receive_Image");
+//            }
+        }
         try {
             fileID = obj.getInt("fileID");
             image = obj.getString("image");
             width = obj.getInt("width");
             height = obj.getInt("height");
         } catch (JSONException e) {
-            System.err.println(e);
+            System.err.println(e + "тоже ошибка из Model_Receive_Image");
         }
     }
 

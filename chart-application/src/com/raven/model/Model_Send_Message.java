@@ -62,20 +62,71 @@ public class Model_Send_Message {
     private String text;
     private Model_File_Sender file;
 
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    private String fileName;
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    private long fileSize;
+
+    public int getFileID() {
+        return fileID;
+    }
+
+    public void setFileID(int fileID) {
+        this.fileID = fileID;
+    }
+
+    private int fileID;
+
     public JSONObject toJsonObject() {
         try {
             JSONObject json = new JSONObject();
             json.put("messageType", messageType.getValue());
             json.put("fromUserID", fromUserID);
             json.put("toUserID", toUserID);
+
             if (messageType == MessageType.FILE || messageType == MessageType.IMAGE) {
-                json.put("text", file.getFileExtensions());
+                json.put("text", file.getFileExtensions());   // оставляем как есть для сервера
+                json.put("fileName", fileName);
+                json.put("fileSize", fileSize);
             } else {
                 json.put("text", text);
             }
+
             return json;
         } catch (JSONException e) {
             return null;
         }
     }
+
+//    public JSONObject toJsonObject() {
+//        try {
+//            JSONObject json = new JSONObject();
+//            json.put("messageType", messageType.getValue());
+//            json.put("fromUserID", fromUserID);
+//            json.put("toUserID", toUserID);
+//            if (messageType == MessageType.FILE || messageType == MessageType.IMAGE) {
+//                json.put("text", file.getFileExtensions());
+//            } else {
+//                json.put("text", text);
+//            }
+//            return json;
+//        } catch (JSONException e) {
+//            return null;
+//        }
+//    }
 }

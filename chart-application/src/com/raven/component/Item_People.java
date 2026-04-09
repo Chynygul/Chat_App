@@ -44,7 +44,9 @@ public class Item_People extends javax.swing.JPanel {
 
             @Override
             public void mouseReleased(MouseEvent me) {
+                System.out.println("Нажимается мышка");
                 if (mouseOver) {
+                    System.out.println("Мышку нажали");
                     PublicEvent.getInstance().getEventMain().selectUser(user);
                 }
             }

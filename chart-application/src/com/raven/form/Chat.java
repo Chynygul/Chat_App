@@ -8,6 +8,7 @@ import com.raven.event.PublicEvent;
 import com.raven.model.Model_Receive_Message;
 import com.raven.model.Model_Send_Message;
 import com.raven.model.Model_User_Account;
+import com.raven.service.Service;
 import net.miginfocom.swing.MigLayout;
 
 public class Chat extends javax.swing.JPanel {
@@ -34,7 +35,25 @@ public class Chat extends javax.swing.JPanel {
 
             @Override
             public void receiveMessage(Model_Receive_Message data) {
-                if (chatTitle.getUser().getUserID() == data.getFromUserID()) {
+                if (chatTitle.getUser() != null && chatTitle.getUser().getUserID() == data.getFromUserID()){
+                    chatBody.addItemLeft(data);
+                }
+            }
+
+            @Override
+            public void clearChat() {
+                chatBody.clearChat();
+            }
+
+            @Override
+            public void loadHistoryMessage(Model_Receive_Message data) {
+                // Do not require chatTitle.getUser(): history ack can arrive before title updates,
+                // and left/right is determined only by sender vs current user.
+
+                // если сообщение отправлено текущим пользователем — показываем справа
+                if (data.getFromUserID() == Service.getInstance().getUser().getUserID()) {
+                    chatBody.addItemHistoryRight(data);
+                } else {
                     chatBody.addItemLeft(data);
                 }
             }

@@ -132,6 +132,8 @@ public class Panel_More extends javax.swing.JPanel {
                                     user.getUserID(),
                                     ""
                             );
+                            message.setFileName(file.getName());
+                            message.setFileSize(file.length());
                             // Добавляем файл к сообщению
                             Service.getInstance().addFile(file, message);
                             // Отправляем сообщение

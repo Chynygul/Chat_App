@@ -12,6 +12,10 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
+import com.raven.event.EventFileReceiver;
+import com.raven.service.Service;
+import java.io.File;
+import java.io.IOException;
 
 public class Chat_Image extends javax.swing.JLayeredPane {
 
@@ -31,9 +35,12 @@ public class Chat_Image extends javax.swing.JLayeredPane {
 
     public void addImage(Model_Receive_Image dataImage) {
         Image_Item pic = new Image_Item();
-        pic.setPreferredSize(new Dimension(dataImage.getWidth(), dataImage.getHeight()));
+        int w = dataImage.getWidth() > 0 ? dataImage.getWidth() : 200;
+        int h = dataImage.getHeight() > 0 ? dataImage.getHeight() : 200;
+        pic.setPreferredSize(new Dimension(w, h));
         pic.setImage(dataImage);
         //  addEvent(pic, image);
+        addEventReceiveImage(pic, dataImage);
         add(pic, "wrap");
     }
 
@@ -44,6 +51,50 @@ public class Chat_Image extends javax.swing.JLayeredPane {
             public void mouseClicked(MouseEvent me) {
                 if (SwingUtilities.isLeftMouseButton(me)) {
                     PublicEvent.getInstance().getEventImageView().viewImage(image);
+                }
+            }
+        });
+    }
+
+    private void addEventReceiveImage(Component com, Model_Receive_Image dataImage) {
+        com.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        com.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent me) {
+                if (!SwingUtilities.isLeftMouseButton(me)) {
+                    return;
+                }
+
+                int fileID = dataImage.getFileID();
+                if (fileID <= 0) {
+                    System.out.println("Invalid image fileID: " + fileID);
+                    return;
+                }
+
+                try {
+                    Service.getInstance().addFileReceiver(fileID, new EventFileReceiver() {
+                        @Override
+                        public void onStartReceiving() {
+                            System.out.println("Start receiving image...");
+                        }
+
+                        @Override
+                        public void onReceiving(double percentage) {
+                            System.out.println("Receiving image: " + percentage + "%");
+                        }
+
+                        @Override
+                        public void onFinish(File file) {
+                            try {
+                                Icon image = new ImageIcon(file.getAbsolutePath());
+                                PublicEvent.getInstance().getEventImageView().viewImage(image);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         });

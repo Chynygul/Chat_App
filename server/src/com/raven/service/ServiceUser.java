@@ -159,6 +159,7 @@ public class ServiceUser {
                             email,
                             checkUserStatus(userID)
                     ));
+                    //getChatHistory();
                 }
             }
         }

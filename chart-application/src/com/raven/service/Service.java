@@ -1,5 +1,6 @@
 package com.raven.service;
 
+import com.raven.app.MessageType;
 import com.raven.event.EventFileReceiver;
 import com.raven.event.PublicEvent;
 import com.raven.model.Model_File_Receiver;
@@ -7,18 +8,65 @@ import com.raven.model.Model_File_Sender;
 import com.raven.model.Model_Receive_Message;
 import com.raven.model.Model_Send_Message;
 import com.raven.model.Model_User_Account;
+import io.socket.client.Ack;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
+import org.json.JSONException;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Service {
+
+    /**
+     * Socket.IO ack payloads vary: {@code JSONArray}, {@code Object[]}, {@code List}, or N separate args.
+     * Casting {@code os[0]} to {@code JSONArray} often fails and hides all history.
+     */
+    private static List<Object> unpackLoadChatAck(Object... os) throws JSONException {
+        if (os == null || os.length == 0) {
+            System.out.println("Если лист пуст");
+            return Collections.emptyList();
+        }
+        Object first = os[0];
+        if (os.length == 1 && first != null) {
+            if (first instanceof org.json.JSONArray) {
+                org.json.JSONArray arr = (org.json.JSONArray) first;
+                List<Object> list = new ArrayList<>(arr.length());
+                for (int i = 0; i < arr.length(); i++) {
+                    list.add(arr.get(i));
+                }
+                System.out.println("если лист json: " + list);
+                return list;
+            }
+            if (first instanceof Object[]) {
+                List<Object> list = new ArrayList<>();
+                for (Object o : (Object[]) first) {
+                    list.add(o);
+                }
+                System.out.println("если лист ArrayList: " + list);
+                return list;
+            }
+            if (first instanceof List) {
+                System.out.println("Пример: Сервер вернул ArrayList<Object> → просто копируем.");
+                return new ArrayList<>((List<?>) first);
+            }
+        }
+        List<Object> list = new ArrayList<>();
+        for (Object o : os) {
+            if (o != null) {
+                list.add(o);
+            }
+        }
+        System.out.println("Возвращается ArrayList: " + list);
+        return list;
+    }
 
     private static Service instance;
     private Socket client;
@@ -27,7 +75,6 @@ public class Service {
     private Model_User_Account user;
     private List<Model_File_Sender> fileSender;
     private List<Model_File_Receiver> fileReceiver;
-
     public static Service getInstance() {
         if (instance == null) {
             instance = new Service();
@@ -187,6 +234,81 @@ public class Service {
 //            error(e);
 //        }
 //    }
+
+//    public void loadChatHistory(int myUserId, int otherUserId) {
+//        client.emit("load_chat", new Integer[]{myUserId, otherUserId}, new Ack() {
+//            @Override
+//            public void call(Object... os) {
+//                if (os.length > 0) {
+//                    PublicEvent.getInstance().getEventChat().clearChat();
+//
+//                    for (Object o : os) {
+//                        Model_Receive_Message msg = new Model_Receive_Message(o);
+//                        PublicEvent.getInstance().getEventChat().loadHistoryMessage(msg);
+//                    }
+//                }
+//            }
+//        });
+//    }
+
+    public void loadChatHistory(int myUserId, int otherUserId) {
+        System.out.println("Функция loadChatHistory в клиентском сервисе");
+        //client.emit("load_chat", new Integer[]{myUserId, otherUserId}, new Ack() {
+        client.emit("load_chat", Arrays.asList(myUserId, otherUserId), new Ack() {
+            /*
+            client — это Socket.IO клиент (соединение с сервером)
+            emit("load_chat", ...) — отправляет событие с именем "load_chat" на сервер
+            new Integer[]{myUserId, otherUserId} — данные запроса (массив из двух ID)
+            new Ack() { ... } — callback-функция, которая вызовется когда сервер ответит
+             */
+            @Override
+            public void call(Object... os) {
+                /*
+                os (Object... os) — это varargs (переменное количество аргументов)
+                Сервер может вернуть данные в любом формате, они попадают сюда как массив os
+                Например: сервер вернул JSONArray → он будет в os[0]
+                 */
+                SwingUtilities.invokeLater(() -> {
+                    if (PublicEvent.getInstance().getEventChat() == null) {
+                        System.out.println("PublicEvent.getInstance().getEventChat() == null");
+                        return;
+                    }
+
+                    PublicEvent.getInstance().getEventChat().clearChat();
+
+                    List<Object> items = null;
+                    try {
+                        System.out.println("Начало функции unpackLoadChatAck()");
+                        items = unpackLoadChatAck(os);
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if (items.isEmpty()) {
+                        System.out.println("List<Object> items = null");
+                        return;
+                    }
+
+                    try {
+                        for (Object item : items) {
+                            org.json.JSONObject obj;
+                            if (item instanceof org.json.JSONObject) {
+                                obj = (org.json.JSONObject) item;
+                            } else if (item instanceof java.util.Map) {
+                                obj = new org.json.JSONObject((java.util.Map<?, ?>) item);
+                            } else {
+                                obj = new org.json.JSONObject(item.toString());
+                            }
+                            Model_Receive_Message msg = new Model_Receive_Message(obj);
+                            System.out.println("Загрузка истории... в клиентском сервисе");
+                            PublicEvent.getInstance().getEventChat().loadHistoryMessage(msg);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        });
+    }
 
     public Model_File_Sender addFile(File file, Model_Send_Message message) throws IOException {
         Model_File_Sender data = new Model_File_Sender(file, client, message);
