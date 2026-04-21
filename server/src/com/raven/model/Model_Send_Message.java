@@ -1,5 +1,7 @@
 package com.raven.model;
 
+import java.util.Date;
+
 public class Model_Send_Message {
 
     public int getMessageType() {
@@ -67,5 +69,14 @@ public class Model_Send_Message {
 
     private String fileName;
     private long fileSize;
+    private Date sentAt;
+
+    public Date getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(Date sentAt) {
+        this.sentAt = sentAt;
+    }
 
 }

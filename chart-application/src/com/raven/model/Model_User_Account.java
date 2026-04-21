@@ -61,10 +61,23 @@ public class Model_User_Account {
             userName = obj.getString("userName");
             email = obj.getString("email");
             gender = obj.getString("gender");
-            image = obj.getString("image");
-            status = obj.getBoolean("status");
+//            image = obj.getString("image");
+//            status = obj.getBoolean("status");
+            // 🔥 Проверяем наличие поля image
+            if (obj.has("image") && !obj.isNull("image")) {
+                image = obj.getString("image");
+            } else {
+                image = null;  // или путь к дефолтной аватарке
+            }
+
+            // 🔥 Для status тоже лучше проверка
+            if (obj.has("status") && !obj.isNull("status")) {
+                status = obj.getBoolean("status");
+            } else {
+                status = false;  // по умолчанию офлайн
+            }
         } catch (JSONException e) {
-            System.err.println(e);
+            System.err.println("Error from Model_User_Account from client" + e);
         }
     }
 

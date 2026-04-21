@@ -1,6 +1,9 @@
 package com.raven.model;
 
 import com.raven.app.MessageType;
+
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,36 +40,26 @@ public class Model_Receive_Message {
         }
     }
 
-    public MessageType getMessageType() {
-        return messageType;
-    }
+    public JSONObject toJsonObject() {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("messageType", messageType.getValue());
+            json.put("fromUserID", fromUserID);
+            json.put("text", text);
 
-    public void setMessageType(MessageType messageType) {
-        this.messageType = messageType;
-    }
+            if (dataImage != null) {
+                json.put("dataImage", dataImage.toJsonObject());
+            }
 
-    public int getFromUserID() {
-        return fromUserID;
-    }
+            if (fileName != null) {
+                json.put("fileName", fileName);
+            }
+            json.put("fileSize", fileSize);
 
-    public void setFromUserID(int fromUserID) {
-        this.fromUserID = fromUserID;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public Model_Receive_Image getDataImage() {
-        return dataImage;
-    }
-
-    public void setDataImage(Model_Receive_Image dataImage) {
-        this.dataImage = dataImage;
+            return json;
+        } catch (JSONException e) {
+            return null;
+        }
     }
 
     public Model_Receive_Message(Object json) throws JSONException {
@@ -98,15 +91,59 @@ public class Model_Receive_Message {
 
             fileSize = jsonLong(obj, "fileSize", 0L);
             fileID = jsonInt(obj, "fileID", 0);
+            long time = obj.getLong("sentAt");
+            this.sentAt = new Date(time);
 
         } catch (JSONException e) {
-            System.err.println(e);
+            System.err.println("ошибка из Model_Receive_Message из клиентск " + e);
         }
     }
 
+    public MessageType getMessageType() {
+        return messageType;
+    }
+
+    public void setMessageType(MessageType messageType) {
+        this.messageType = messageType;
+    }
+
+    public int getFromUserID() {
+        return fromUserID;
+    }
+
+    public void setFromUserID(int fromUserID) {
+        this.fromUserID = fromUserID;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public Model_Receive_Image getDataImage() {
+        return dataImage;
+    }
+
+    public void setDataImage(Model_Receive_Image dataImage) {
+        this.dataImage = dataImage;
+    }
     private MessageType messageType;
     private int fromUserID;
     private String text;
+
+    public Date  getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(Date  sentAt) {
+        this.sentAt = sentAt;
+    }
+
+    private Date  sentAt;
+
     private Model_Receive_Image dataImage;
 
     public String getFileName() {
@@ -124,8 +161,8 @@ public class Model_Receive_Message {
     public void setFileSize(long fileSize) {
         this.fileSize = fileSize;
     }
-
     private String fileName;
+
     private long fileSize;
 
     public int getFileID() {
@@ -138,26 +175,4 @@ public class Model_Receive_Message {
 
     private int fileID;
 
-
-    public JSONObject toJsonObject() {
-        try {
-            JSONObject json = new JSONObject();
-            json.put("messageType", messageType.getValue());
-            json.put("fromUserID", fromUserID);
-            json.put("text", text);
-
-            if (dataImage != null) {
-                json.put("dataImage", dataImage.toJsonObject());
-            }
-
-            if (fileName != null) {
-                json.put("fileName", fileName);
-            }
-            json.put("fileSize", fileSize);
-
-            return json;
-        } catch (JSONException e) {
-            return null;
-        }
-    }
 }

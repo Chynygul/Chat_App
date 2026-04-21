@@ -1,5 +1,8 @@
 package com.raven.model;
 
+import java.sql.Timestamp;
+import java.util.Date;
+
 public class Model_Receive_Message {
 
     public int getMessageType() {
@@ -34,11 +37,12 @@ public class Model_Receive_Message {
         this.dataImage = dataImage;
     }
 
-    public Model_Receive_Message(int messageType, int fromUserID, String text, Model_Receive_Image dataImage) {
+    public Model_Receive_Message(int messageType, int fromUserID, String text, Model_Receive_Image dataImage, Date sentAt) {
         this.messageType = messageType;
         this.fromUserID = fromUserID;
         this.text = text;
         this.dataImage = dataImage;
+        this.sentAt = sentAt;
     }
 
     public Model_Receive_Message() {
@@ -69,6 +73,12 @@ public class Model_Receive_Message {
     private long fileSize;
     private int fileID;
 
+    public Date getSentAt() {
+        return sentAt;
+    }
+
+    private Date sentAt;
+
     public int getFileID() {
         return fileID;
     }
@@ -76,4 +86,9 @@ public class Model_Receive_Message {
     public void setFileID(int fileID) {
         this.fileID = fileID;
     }
+
+    public void setSentAt(Date  sentAt){
+        this.sentAt = sentAt;
+    }
+
 }

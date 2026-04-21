@@ -18,10 +18,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Service {
 
@@ -288,6 +285,7 @@ public class Service {
                         return;
                     }
 
+                    Set<Integer> loadedFiles = new HashSet<>();
                     try {
                         for (Object item : items) {
                             org.json.JSONObject obj;
@@ -299,8 +297,13 @@ public class Service {
                                 obj = new org.json.JSONObject(item.toString());
                             }
                             Model_Receive_Message msg = new Model_Receive_Message(obj);
+
                             System.out.println("Загрузка истории... в клиентском сервисе");
                             PublicEvent.getInstance().getEventChat().loadHistoryMessage(msg);
+
+//                            if (msg.getFileID() > 0) {
+//                                addFileReceiver(msg.getFileID(), event);
+//                            }
                         }
                     } catch (Exception e) {
                         e.printStackTrace();

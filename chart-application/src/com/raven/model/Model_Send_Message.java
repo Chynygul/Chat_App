@@ -4,6 +4,8 @@ import com.raven.app.MessageType;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Date;
+
 public class Model_Send_Message {
 
     public MessageType getMessageType() {
@@ -61,6 +63,16 @@ public class Model_Send_Message {
     private int toUserID;
     private String text;
     private Model_File_Sender file;
+
+    public Date getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(Date sentAt) {
+        this.sentAt = sentAt;
+    }
+
+    private Date sentAt;
 
     public String getFileName() {
         return fileName;

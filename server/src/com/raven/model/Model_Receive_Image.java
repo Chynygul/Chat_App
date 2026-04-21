@@ -1,5 +1,7 @@
 package com.raven.model;
 
+import java.sql.Timestamp;
+
 public class Model_Receive_Image {
 
     public int getFileID() {
@@ -34,11 +36,12 @@ public class Model_Receive_Image {
         this.height = height;
     }
 
-    public Model_Receive_Image(int fileID, String image, int width, int height) {
+    public Model_Receive_Image(int fileID, String image, int width, int height, Timestamp sentAt) {
         this.fileID = fileID;
         this.image = image;
         this.width = width;
         this.height = height;
+        this.sentAt = sentAt;
     }
 
     public Model_Receive_Image() {
@@ -48,4 +51,13 @@ public class Model_Receive_Image {
     private String image;
     private int width;
     private int height;
+    private Timestamp sentAt;
+
+    public Timestamp getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(Timestamp sentAt) {
+        this.sentAt = sentAt;
+    }
 }

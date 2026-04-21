@@ -77,6 +77,20 @@ public class Chat_Item extends javax.swing.JLayeredPane {
         add(layer);
     }
 
+    public void setImage(java.io.File file) {
+        try {
+            javax.swing.ImageIcon icon = new javax.swing.ImageIcon(file.getAbsolutePath());
+
+            // уменьшаем если нужно
+            java.awt.Image img = icon.getImage().getScaledInstance(200, -1, java.awt.Image.SCALE_SMOOTH);
+
+            label.setIcon(new javax.swing.ImageIcon(img));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void setFile(String fileName, String fileSize, int fileID) {
         JLayeredPane layer = new JLayeredPane();
         layer.setLayout(new FlowLayout(FlowLayout.LEFT));

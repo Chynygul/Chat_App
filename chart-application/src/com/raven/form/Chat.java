@@ -53,6 +53,7 @@ public class Chat extends javax.swing.JPanel {
                 // если сообщение отправлено текущим пользователем — показываем справа
                 if (data.getFromUserID() == Service.getInstance().getUser().getUserID()) {
                     chatBody.addItemHistoryRight(data);
+                    //chatBody.addItemRight(data);
                 } else {
                     chatBody.addItemLeft(data);
                 }

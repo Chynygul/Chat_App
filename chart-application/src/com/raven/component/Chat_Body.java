@@ -2,6 +2,8 @@ package com.raven.component;
 
 import com.raven.app.MessageType;
 import com.raven.emoji.Emogi;
+import com.raven.model.Model_File_Sender;
+import com.raven.model.Model_Receive_Image;
 import com.raven.model.Model_Receive_Message;
 import com.raven.model.Model_Send_Message;
 import com.raven.swing.ScrollBar;
@@ -9,12 +11,18 @@ import java.awt.Adjustable;
 import java.awt.Color;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.sql.Timestamp;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import javax.swing.JScrollBar;
+import java.util.Date;
+import javax.swing.*;
+
 import net.miginfocom.swing.MigLayout;
 
 public class Chat_Body extends javax.swing.JPanel {
+
+    private java.util.Map<Integer, Object> messageMap = new java.util.HashMap<>();
+    private String lastDate = "";
 
     public Chat_Body() {
         initComponents();
@@ -28,27 +36,45 @@ public class Chat_Body extends javax.swing.JPanel {
     }
 
     public void addItemLeft(Model_Receive_Message data) {
+        addDateIfNeeded(data.getSentAt());
         if (data.getMessageType() == MessageType.TEXT) {
             Chat_Left item = new Chat_Left();
             item.setText(data.getText());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             body.add(item, "wrap, w 100::80%");
         } else if (data.getMessageType() == MessageType.EMOJI) {
             Chat_Left item = new Chat_Left();
             item.setEmoji(Emogi.getInstance().getImoji(Integer.valueOf(data.getText())).getIcon());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             body.add(item, "wrap, w 100::80%");
         } else if (data.getMessageType() == MessageType.IMAGE) {
             Chat_Left item = new Chat_Left();
             item.setText("");
             item.setImage(data.getDataImage());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             body.add(item, "wrap, w 100::80%");
         } else if (data.getMessageType() == MessageType.FILE) {
             Chat_Left item = new Chat_Left();
             item.setText("");
             item.setFile(data.getFileName(), formatFileSize(data.getFileSize()), data.getFileID());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             this.body.add(item, "wrap, w 100::80%");
             this.scrollToBottom();
         }
@@ -64,6 +90,42 @@ public class Chat_Body extends javax.swing.JPanel {
         if (mb < 1024) return String.format("%.1f MB", mb);
         double gb = mb / 1024.0;
         return String.format("%.1f GB", gb);
+    }
+
+    private String getDateLabel(Date date) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        java.util.Calendar msgCal = java.util.Calendar.getInstance();
+        msgCal.setTime(date);
+
+        boolean isToday =
+                cal.get(java.util.Calendar.YEAR) == msgCal.get(java.util.Calendar.YEAR) &&
+                        cal.get(java.util.Calendar.DAY_OF_YEAR) == msgCal.get(java.util.Calendar.DAY_OF_YEAR);
+
+        cal.add(java.util.Calendar.DAY_OF_YEAR, -1);
+
+        boolean isYesterday =
+                cal.get(java.util.Calendar.YEAR) == msgCal.get(java.util.Calendar.YEAR) &&
+                        cal.get(java.util.Calendar.DAY_OF_YEAR) == msgCal.get(java.util.Calendar.DAY_OF_YEAR);
+
+        if (isToday) return "Сегодня";
+        if (isYesterday) return "Вчера";
+
+        return new java.text.SimpleDateFormat("dd MMM yyyy").format(date);
+    }
+
+    private void addDateIfNeeded(Date date) {
+        if (date == null) return;
+
+        String currentDate = getDateLabel(date);
+
+        if (!currentDate.equals(lastDate)) {
+            lastDate = currentDate;
+
+            Chat_Date item = new Chat_Date();
+            item.setDate(currentDate);
+
+            body.add(item, "wrap, al center");
+        }
     }
 
 //    public void addItemLeft(String text, String user, String[] image) {
@@ -91,21 +153,35 @@ public class Chat_Body extends javax.swing.JPanel {
 //    }
 
     public void addItemRight(Model_Send_Message data) {
+        addDateIfNeeded(data.getSentAt());
         if (data.getMessageType() == MessageType.TEXT) {
             Chat_Right item = new Chat_Right();
             item.setText(data.getText());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
             body.add(item, "wrap, al right, w 100::80%");
         } else if (data.getMessageType() == MessageType.EMOJI) {
             Chat_Right item = new Chat_Right();
             item.setEmoji(Emogi.getInstance().getImoji(Integer.valueOf(data.getText())).getIcon());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
             body.add(item, "wrap, al right, w 100::80%");
         } else if (data.getMessageType() == MessageType.IMAGE) {
             Chat_Right item = new Chat_Right();
             item.setText("");
             item.setImage(data.getFile());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
             body.add(item, "wrap, al right, w 100::80%");
         } else if (data.getMessageType() == MessageType.FILE) {
             Chat_Right item = new Chat_Right();
@@ -117,7 +193,11 @@ public class Chat_Body extends javax.swing.JPanel {
             }
 
             item.setFile(data.getFileName(), formatFileSize(data.getFileSize()), localFile);
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
             this.body.add(item, "wrap, al right, w 100::80%");
             this.scrollToBottom();
         }
@@ -136,15 +216,24 @@ public class Chat_Body extends javax.swing.JPanel {
     }
 
     public void addItemHistoryRight(Model_Receive_Message data) {
+        addDateIfNeeded(data.getSentAt() != null ? data.getSentAt() : new Date());
         if (data.getMessageType() == MessageType.TEXT) {
             Chat_Right item = new Chat_Right();
             item.setText(data.getText());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             body.add(item, "wrap, al right, w 100::80%");
         } else if (data.getMessageType() == MessageType.EMOJI) {
             Chat_Right item = new Chat_Right();
             item.setEmoji(Emogi.getInstance().getImoji(Integer.valueOf(data.getText())).getIcon());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             body.add(item, "wrap, al right, w 100::80%");
         } else if (data.getMessageType() == MessageType.IMAGE) {
             Chat_Right item = new Chat_Right();
@@ -153,14 +242,25 @@ public class Chat_Body extends javax.swing.JPanel {
             // для истории справа у нас нет Model_File_Sender, а есть только fileID/dataImage
             // поэтому пока используем dataImage, как и слева
             item.setImage(data.getDataImage());
+            if (data.getFileID() > 0) {
+                messageMap.put(data.getFileID(), item); // 🔥 сохраняем
+            }
 
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             body.add(item, "wrap, al right, w 100::80%");
         } else if (data.getMessageType() == MessageType.FILE) {
             Chat_Right item = new Chat_Right();
             item.setText("");
             item.setFile(data.getFileName(), formatFileSize(data.getFileSize()), data.getFileID());
-            item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
+            //item.setTime(formatTime(data.getSentAt()));
+            item.setTime(data.getSentAt() != null
+                    ? formatTime(data.getSentAt())
+                    : LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a")));
             body.add(item, "wrap, al right, w 100::80%");
         }
 
@@ -168,6 +268,25 @@ public class Chat_Body extends javax.swing.JPanel {
         revalidate();
         scrollToBottom();
     }
+
+    private String formatTime(Date date) {
+        return new java.text.SimpleDateFormat("hh:mm a").format(date);
+    }
+
+//    public void updateFileMessage(int fileID, java.io.File file) {
+//        Object obj = messageMap.get(fileID);
+//
+//        if (obj instanceof Chat_Left) {
+//            Chat_Left item = (Chat_Left) obj;
+//            item.setImage(file); // 🔥 ПОЛНОЕ изображение
+//        } else if (obj instanceof Chat_Right) {
+//            Chat_Right item = (Chat_Right) obj;
+//            item.setImage(file);
+//        }
+//
+//        repaint();
+//        revalidate();
+//    }
 
 //    public void addItemFileRight(String text, String fileName, String fileSize, int fileID) {
 //        Chat_Right item = new Chat_Right();
@@ -189,6 +308,7 @@ public class Chat_Body extends javax.swing.JPanel {
 
     public void clearChat() {
         body.removeAll();
+        lastDate = "";
         repaint();
         revalidate();
     }

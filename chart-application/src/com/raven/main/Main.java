@@ -9,9 +9,7 @@ import com.raven.service.Service;
 import com.raven.swing.ComponentResizer;
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
+import javax.swing.*;
 
 public class Main extends javax.swing.JFrame {
 
@@ -73,7 +71,109 @@ public class Main extends javax.swing.JFrame {
 
             @Override
             public void saveImage(Icon image) {
-                System.out.println("Save Image next update");
+                if (image == null) {
+                    System.out.println("Нет изображения для сохранения");
+                    return;
+                }
+
+                try {
+                    JFileChooser fileChooser = new JFileChooser();
+
+                    // 📁 Папка "Загрузки"
+                    String userHome = System.getProperty("user.home");
+                    java.io.File downloads = new java.io.File(userHome, "Downloads");
+                    if (downloads.exists()) {
+                        fileChooser.setCurrentDirectory(downloads);
+                    }
+
+                    fileChooser.setDialogTitle("Сохранить изображение");
+
+                    // 🖼 имя файла по умолчанию
+                    String defaultName = "image_" + System.currentTimeMillis();
+                    fileChooser.setSelectedFile(new java.io.File(defaultName + ".png"));
+
+                    // 📌 Фильтры форматов
+                    javax.swing.filechooser.FileNameExtensionFilter pngFilter =
+                            new javax.swing.filechooser.FileNameExtensionFilter("PNG Image (*.png)", "png");
+                    javax.swing.filechooser.FileNameExtensionFilter jpgFilter =
+                            new javax.swing.filechooser.FileNameExtensionFilter("JPG Image (*.jpg)", "jpg");
+
+                    fileChooser.addChoosableFileFilter(pngFilter);
+                    fileChooser.addChoosableFileFilter(jpgFilter);
+                    fileChooser.setFileFilter(pngFilter); // по умолчанию PNG
+
+                    int result = fileChooser.showSaveDialog(null);
+
+                    if (result != JFileChooser.APPROVE_OPTION) {
+                        return;
+                    }
+
+                    java.io.File file = fileChooser.getSelectedFile();
+
+                    // 📌 Определяем формат
+                    String format = "png";
+                    javax.swing.filechooser.FileFilter selectedFilter = fileChooser.getFileFilter();
+
+                    if (selectedFilter == jpgFilter) {
+                        format = "jpg";
+                    }
+
+                    // 👉 добавляем расширение если нет
+                    if (!file.getName().toLowerCase().endsWith("." + format)) {
+                        file = new java.io.File(file.getAbsolutePath() + "." + format);
+                    }
+
+                    // ⚠️ Проверка на перезапись
+                    if (file.exists()) {
+                        int confirm = JOptionPane.showConfirmDialog(
+                                null,
+                                "Файл уже существует. Перезаписать?",
+                                "Подтверждение",
+                                JOptionPane.YES_NO_OPTION
+                        );
+
+                        if (confirm != JOptionPane.YES_OPTION) {
+                            return;
+                        }
+                    }
+
+                    // 🔄 Icon → BufferedImage
+                    java.awt.image.BufferedImage bufferedImage =
+                            new java.awt.image.BufferedImage(
+                                    image.getIconWidth(),
+                                    image.getIconHeight(),
+                                    java.awt.image.BufferedImage.TYPE_INT_ARGB
+                            );
+
+                    java.awt.Graphics g = bufferedImage.createGraphics();
+                    image.paintIcon(null, g, 0, 0);
+                    g.dispose();
+
+                    // ⚠️ JPG не поддерживает прозрачность
+                    if (format.equals("jpg")) {
+                        java.awt.image.BufferedImage rgbImage =
+                                new java.awt.image.BufferedImage(
+                                        bufferedImage.getWidth(),
+                                        bufferedImage.getHeight(),
+                                        java.awt.image.BufferedImage.TYPE_INT_RGB
+                                );
+
+                        java.awt.Graphics2D g2d = rgbImage.createGraphics();
+                        g2d.setColor(java.awt.Color.WHITE);
+                        g2d.fillRect(0, 0, rgbImage.getWidth(), rgbImage.getHeight());
+                        g2d.drawImage(bufferedImage, 0, 0, null);
+                        g2d.dispose();
+
+                        javax.imageio.ImageIO.write(rgbImage, "jpg", file);
+                    } else {
+                        javax.imageio.ImageIO.write(bufferedImage, "png", file);
+                    }
+
+                    System.out.println("Сохранено: " + file.getAbsolutePath());
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
         });

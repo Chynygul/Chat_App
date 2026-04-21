@@ -1,5 +1,6 @@
 package com.raven.model;
 
+import java.sql.Timestamp;
 import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,6 +44,7 @@ public class Model_Receive_Image {
         this.image = image;
         this.width = width;
         this.height = height;
+        //this.sentAt = sentAt;
     }
 
     public Model_Receive_Image(Object json) throws JSONException {
@@ -65,6 +67,7 @@ public class Model_Receive_Image {
             image = obj.getString("image");
             width = obj.getInt("width");
             height = obj.getInt("height");
+            //sentAt = new Timestamp(obj.getLong("sentAt"));
         } catch (JSONException e) {
             System.err.println(e + "тоже ошибка из Model_Receive_Image");
         }
@@ -74,6 +77,15 @@ public class Model_Receive_Image {
     private String image;
     private int width;
     private int height;
+    private Timestamp sentAt;
+
+    public Timestamp getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(Timestamp sentAt) {
+        this.sentAt = sentAt;
+    }
 
     public JSONObject toJsonObject() {
         try {
@@ -82,6 +94,7 @@ public class Model_Receive_Image {
             json.put("image", image);
             json.put("width", width);
             json.put("height", height);
+            json.put("sentAt", sentAt);
             return json;
         } catch (JSONException e) {
             return null;

@@ -58,6 +58,9 @@ public class ServiceMessage {
                     msg.setFileName(r.getString("file_name"));
                     msg.setFileSize(r.getLong("file_size"));
                     msg.setFileID(r.getInt("file_id"));
+
+                    Timestamp sentAt = r.getTimestamp("sent_at");   // 🔥
+                    msg.setSentAt(sentAt);
                     list.add(msg);
                 }
             }

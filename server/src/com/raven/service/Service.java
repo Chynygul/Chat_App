@@ -235,6 +235,7 @@ public class Service {
                         }
                         map.put("fileSize", msg.getFileSize());
                         map.put("fileID", msg.getFileID());
+                        map.put("sentAt", msg.getSentAt());
 
                         if (msg.getMessageType() == MessageType.IMAGE.getValue() && msg.getFileID() > 0) {
                             try {
@@ -323,7 +324,8 @@ public class Service {
                     data.getMessageType(),
                     data.getFromUserID(),
                     data.getText(),
-                    null
+                    null,
+                    data.getSentAt()
             );
 
             // СНАЧАЛА сохраняем в БД
@@ -353,7 +355,8 @@ public class Service {
                         data.getMessageType(),
                         data.getFromUserID(),
                         data.getText(),
-                        dataImage
+                        dataImage,
+                        data.getSentAt()
                 );
 
                 ms.setFileName(data.getFileName());
@@ -366,6 +369,7 @@ public class Service {
                 try {
                     serviceMessage.saveMessage(ms, data.getToUserID());
                 } catch (SQLException e) {
+                    System.out.println(" Error from sendTempFileToClient from Service from server: ");
                     e.printStackTrace();
                 }
 
